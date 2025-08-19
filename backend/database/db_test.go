@@ -10,6 +10,7 @@ import (
 )
 
 func InitTestDB() *gorm.DB {
+	//create a db in local memory with sqlite
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
