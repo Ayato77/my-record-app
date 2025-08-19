@@ -24,12 +24,13 @@ func ConnectDB() error {
 
 // TODO: test it!
 // Returns the achived records, length of the total found records, error
-func GetWithPaginationDB(page, limit, offset int, tags []string, sort string) ([]models.Record, int64, error) {
+func GetWithPaginationDB(userId, page, limit, offset int, tags []string, sort string) ([]models.Record, int64, error) {
 	var records []models.Record
 	query := DB.Model(&models.Record{})
 	if len(tags) > 0 {
 		query = query.Joins("JOIN record_tag rt ON rt.record_id = records.id").
 			Joins("JOIN tags t ON t.id = rt.tag_id").
+			Where("records.user_id = ?", userId).
 			Where("t.name IN ?", tags).
 			Group("records.id").
 			Having("COUNT(DISTINCT t.id) = ?", len(tags)). // AND condition for tags

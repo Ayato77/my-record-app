@@ -42,6 +42,13 @@ func CreateRecord(logger *zap.Logger) gin.HandlerFunc {
 func GetRecords(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logger.Info("GetRecords!")
+		userID, exists := c.Get("userID")
+		if !exists {
+			logger.Sugar().Errorf("User ID %s does not exist", userID)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+			return
+		}
+
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 		sort := c.DefaultQuery("sort", "created_at desc")
@@ -57,7 +64,7 @@ func GetRecords(logger *zap.Logger) gin.HandlerFunc {
 		}
 		offset := (page - 1) * limit
 
-		records, total, err := database.GetWithPaginationDB(page, limit, offset, tags, sort)
+		records, total, err := database.GetWithPaginationDB(userID.(int), page, limit, offset, tags, sort)
 		if err != nil {
 			//TODO: Do we need to handle invalid queries?
 			logger.Sugar().Errorf("Getting records failed", err)

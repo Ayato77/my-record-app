@@ -85,6 +85,14 @@ func TestGetWithPaginationDB(t *testing.T) {
 		Tags:    tags3,
 	}
 
+	newRecord4 := models.Record{
+		UserID:  2,
+		Title:   "D",
+		Content: "Content D",
+		Rating:  4,
+		Tags:    tags3,
+	}
+
 	//Insert records by DB.Create
 	if err := DB.Create(&newRecord1).Error; err != nil {
 		t.Errorf("Error: DB Create: %s", err)
@@ -101,11 +109,16 @@ func TestGetWithPaginationDB(t *testing.T) {
 		return
 	}
 
+	if err := DB.Create(&newRecord4).Error; err != nil {
+		t.Errorf("Error: DB Create: %s", err)
+		return
+	}
+
 	//Call GetWithPaginationDB
 	var tagSingle = []string{"tori"}
 	var tagDouble = []string{"tori", "nasubi"}
 	var tagInvalid = []string{"onion"}
-	records, total, err := GetWithPaginationDB(1, 10, 0, tagSingle, "")
+	records, total, err := GetWithPaginationDB(1, 1, 10, 0, tagSingle, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB: %s", err)
 		return
@@ -130,7 +143,7 @@ func TestGetWithPaginationDB(t *testing.T) {
 		tagCounter = 0
 	}
 
-	records, total, err = GetWithPaginationDB(1, 10, 0, tagDouble, "")
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagDouble, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Double: %s", err)
 		return
@@ -156,7 +169,7 @@ func TestGetWithPaginationDB(t *testing.T) {
 		tagCounter = 0
 	}
 
-	records, total, err = GetWithPaginationDB(1, 10, 0, tagInvalid, "")
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagInvalid, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Invalid: %s", err)
 		return
