@@ -1,25 +1,29 @@
 package main
 
 import (
-	"my-record-app/routes"
 	"my-record-app/database"
 	"my-record-app/models"
+	"my-record-app/routes"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"log"
+	"go.uber.org/zap"
 )
 
 func main() {
 
-	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+	logger, _ := zap.NewDevelopment()
+
+	if err := godotenv.Load(); err != nil {
+		logger.Sugar().Fatalf("Error loading .env file:", err)
+	}
 
 	router := gin.Default()
-	database.ConnectDB()
-	database.DB.AutoMigrate(&models.Record{})// auto migration for record
-	database.DB.AutoMigrate(&models.User{})//auto migration for user
-	routes.SetupRoutes(router)
+	if err := database.ConnectDB(); err != nil {
+		logger.Sugar().Fatalf("Error connecting the database failed ", err)
+	}
+	database.DB.AutoMigrate(&models.Record{}) // auto migration for record
+	database.DB.AutoMigrate(&models.User{})   //auto migration for user
+	routes.SetupRoutes(router, logger)
 	router.Run(":8080")
 }

@@ -1,25 +1,48 @@
 package database
 
 import (
+	"fmt"
+	"my-record-app/models"
+	"os"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
-	"os"
-	"fmt"
 )
 
 var DB *gorm.DB
 
-func ConnectDB() {
+func ConnectDB() error {
 	dsn := os.Getenv("DB_URL")
 	fmt.Println("DB_URL: ", dsn)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database: ", err)
+		return err
 	}
 	DB = db
+	return nil
 }
 
-func GetDB() *gorm.DB {
-	return DB
+// TODO: test it!
+// Returns the achived records, length of the total found records, error
+func GetWithPaginationDB(page, limit, offset int, tags []string, sort string) ([]models.Record, int64, error) {
+	var records []models.Record
+	query := DB.Model(&models.Record{})
+	if len(tags) > 0 {
+		query = query.Joins("JOIN record_tag rt ON rt.record_id = records.id").
+			Joins("JOIN tags t ON t.id = rt.tag_id").
+			Where("t.name IN ?", tags).
+			Group("records.id").
+			Having("COUNT(DISTINCT t.id) = ?", len(tags)). // AND condition for tags
+			Preload("Tags").
+			Find(&records)
+	}
+
+	var total int64
+	query.Count(&total)
+
+	if err := query.Order(sort).Limit(limit).Offset(offset).Find(&records).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return records, total, nil
 }

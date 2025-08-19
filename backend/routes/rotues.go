@@ -1,12 +1,14 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"my-record-app/controllers"
 	"my-record-app/middleware"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func SetupRoutes(router *gin.Engine) {
+func SetupRoutes(router *gin.Engine, logger *zap.Logger) {
 	router.POST("/login", controllers.Login)
 	router.POST("/register", controllers.Register)
 
@@ -14,8 +16,8 @@ func SetupRoutes(router *gin.Engine) {
 	//Below is a protected route that requires a valid JWT token to access
 	auth.Use(middleware.AuthRequired())
 	{
-		//auth.POST("/records", controllers.CreateRecord)
-		auth.GET("/records", controllers.GetRecords)
+		auth.POST("/records", controllers.CreateRecord(logger))
+		auth.GET("/records", controllers.GetRecords(logger))
 		//auth.PUT("/records/:id", controllers.UpdateRecord)
 		//auth.DELETE("/records/:id", controllers.DeleteRecord)
 		//auth.GET("/records/:id", controllers.GetRecord)
