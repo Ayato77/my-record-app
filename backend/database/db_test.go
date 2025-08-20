@@ -10,6 +10,9 @@ import (
 )
 
 func InitTestDB() *gorm.DB {
+	if DB != nil {
+		return DB
+	}
 	//create a db in local memory with sqlite
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
@@ -31,33 +34,27 @@ func TestGetWithPaginationDB(t *testing.T) {
 	var tags1 = []models.Tag{
 		{
 			Name: "tamago",
-			ID:   1,
 		},
 		{
 			Name: "niku",
-			ID:   2,
 		},
 	}
 
 	var tags2 = []models.Tag{
 		{
 			Name: "tori",
-			ID:   3,
 		},
 		{
 			Name: "nasubi",
-			ID:   4,
 		},
 	}
 
 	var tags3 = []models.Tag{
 		{
 			Name: "tori",
-			ID:   3,
 		},
 		{
 			Name: "negi",
-			ID:   5,
 		},
 	}
 
@@ -96,22 +93,18 @@ func TestGetWithPaginationDB(t *testing.T) {
 	//Insert records by DB.Create
 	if err := DB.Create(&newRecord1).Error; err != nil {
 		t.Errorf("Error: DB Create: %s", err)
-		return
 	}
 
 	if err := DB.Create(&newRecord2).Error; err != nil {
 		t.Errorf("Error: DB Create: %s", err)
-		return
 	}
 
 	if err := DB.Create(&newRecord3).Error; err != nil {
 		t.Errorf("Error: DB Create: %s", err)
-		return
 	}
 
 	if err := DB.Create(&newRecord4).Error; err != nil {
 		t.Errorf("Error: DB Create: %s", err)
-		return
 	}
 
 	//Call GetWithPaginationDB
@@ -121,12 +114,10 @@ func TestGetWithPaginationDB(t *testing.T) {
 	records, total, err := GetWithPaginationDB(1, 1, 10, 0, tagSingle, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB: %s", err)
-		return
 	}
 
 	if total != 2 {
 		t.Error("Too many or few records are found")
-		return
 	}
 
 	var tagCounter int = 0
@@ -146,12 +137,10 @@ func TestGetWithPaginationDB(t *testing.T) {
 	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagDouble, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Double: %s", err)
-		return
 	}
 
 	if total > 1 {
 		t.Error("Too many records are found (Double)")
-		return
 	}
 
 	for _, item := range records[0].Tags {
@@ -172,14 +161,63 @@ func TestGetWithPaginationDB(t *testing.T) {
 	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagInvalid, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Invalid: %s", err)
-		return
 	}
 
 	if total > 0 {
 		t.Error("Too many records are found (Invalid)")
-		return
 	}
 
 	t.Log(records)
 
+}
+
+func TestDeleteSingleRecord(t *testing.T) {
+	InitTestDB()
+
+	userId := 1
+	invalidUserId := 2
+	//create record
+	var tags1 = []models.Tag{
+		{
+			Name: "tamago",
+		},
+		{
+			Name: "niku",
+		},
+	}
+
+	newRecord1 := models.Record{
+		UserID:  uint(userId),
+		Title:   "E",
+		Content: "Content E",
+		Rating:  1,
+		Tags:    tags1,
+	}
+
+	recordId, err := CreateRecord(newRecord1)
+	if err != nil {
+		t.Errorf("Error: DB Create: %s", err)
+	}
+	//try to delete a record with not existing user_id
+	rowsAffected, err := DeleteSingleRecord(invalidUserId, int(recordId))
+	if err == nil && rowsAffected != 0 {
+		t.Errorf("Error: DB Delete with a invalid user ID was succeeded: %s", err)
+	}
+
+	//try to delete a record with not existing record_id
+	rowsAffected, err = DeleteSingleRecord(userId, int(recordId+100))
+	if err == nil && rowsAffected != 0 {
+		t.Errorf("Error: DB Delete with a invalid record ID was succeeded: %s", err)
+	}
+	//delete a record with a valid id
+	rowsAffected, err = DeleteSingleRecord(userId, int(recordId))
+	if err != nil {
+		t.Errorf("Error: DB Delete with valid IDs failed: %s", err)
+	}
+
+	if rowsAffected == 0 {
+		t.Error("No record is deleted")
+	}
+
+	t.Log(rowsAffected)
 }

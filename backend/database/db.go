@@ -22,6 +22,14 @@ func ConnectDB() error {
 	return nil
 }
 
+func CreateRecord(record models.Record) (uint, error) {
+	if err := DB.Create(&record).Error; err != nil {
+		return 0, err
+	}
+
+	return record.ID, nil
+}
+
 // TODO: test it!
 // Returns the achived records, length of the total found records, error
 func GetWithPaginationDB(userId, page, limit, offset int, tags []string, sort string) ([]models.Record, int64, error) {
@@ -46,4 +54,14 @@ func GetWithPaginationDB(userId, page, limit, offset int, tags []string, sort st
 	}
 
 	return records, total, nil
+}
+
+func DeleteSingleRecord(userId, recordId int) (int, error) {
+	res := DB.Where("records.user_id = ?", userId).Where("records.id = ?", recordId).Delete(&models.Record{})
+
+	if res.Error != nil {
+		return 0, res.Error
+	}
+
+	return int(res.RowsAffected), nil
 }

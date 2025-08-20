@@ -19,7 +19,7 @@ func SetupRoutes(router *gin.Engine, logger *zap.Logger) {
 		auth.POST("/records", controllers.CreateRecord(logger))
 		auth.GET("/records", controllers.GetRecords(logger))
 		//auth.PUT("/records/:id", controllers.UpdateRecord)
-		//auth.DELETE("/records/:id", controllers.DeleteRecord)
+		auth.DELETE("/records/:id", controllers.DeleteRecord(logger))
 		//auth.GET("/records/:id", controllers.GetRecord)
 	}
 
