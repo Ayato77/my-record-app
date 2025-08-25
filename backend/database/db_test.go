@@ -60,32 +60,32 @@ func TestGetWithPaginationDB(t *testing.T) {
 
 	newRecord1 := models.Record{
 		UserID:  1,
-		Title:   "A",
-		Content: "Content A",
+		Title:   "オムライス",
+		Content: "とろーり卵",
 		Rating:  1,
 		Tags:    tags1,
 	}
 
 	newRecord2 := models.Record{
 		UserID:  1,
-		Title:   "B",
-		Content: "Content B",
+		Title:   "とりと野菜の煮込み",
+		Content: "和風のチキン。ナス",
 		Rating:  3,
 		Tags:    tags2,
 	}
 
 	newRecord3 := models.Record{
 		UserID:  1,
-		Title:   "C",
-		Content: "Content C",
+		Title:   "親子丼",
+		Content: "とりもも肉、その他",
 		Rating:  4,
 		Tags:    tags3,
 	}
 
 	newRecord4 := models.Record{
 		UserID:  2,
-		Title:   "D",
-		Content: "Content D",
+		Title:   "ねぎま",
+		Content: "串、炭火",
 		Rating:  4,
 		Tags:    tags3,
 	}
@@ -108,10 +108,14 @@ func TestGetWithPaginationDB(t *testing.T) {
 	}
 
 	//Call GetWithPaginationDB
+	var tagEmpty []string
 	var tagSingle = []string{"tori"}
 	var tagDouble = []string{"tori", "nasubi"}
 	var tagInvalid = []string{"onion"}
-	records, total, err := GetWithPaginationDB(1, 1, 10, 0, tagSingle, "")
+	var keywordEmpty []string
+	var keywordSingle = []string{"オム"}
+	var keywordDouble = []string{"とり", "チキン"}
+	records, total, err := GetWithPaginationDB(1, 1, 10, 0, SearchTag, keywordEmpty, tagSingle, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB: %s", err)
 	}
@@ -119,6 +123,8 @@ func TestGetWithPaginationDB(t *testing.T) {
 	if total != 2 {
 		t.Error("Too many or few records are found")
 	}
+
+	t.Log(records)
 
 	var tagCounter int = 0
 	for _, item := range records[0].Tags {
@@ -134,7 +140,7 @@ func TestGetWithPaginationDB(t *testing.T) {
 		tagCounter = 0
 	}
 
-	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagDouble, "")
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, SearchTag, keywordEmpty, tagDouble, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Double: %s", err)
 	}
@@ -158,13 +164,40 @@ func TestGetWithPaginationDB(t *testing.T) {
 		tagCounter = 0
 	}
 
-	records, total, err = GetWithPaginationDB(1, 1, 10, 0, tagInvalid, "")
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, SearchTag, keywordEmpty, tagInvalid, "")
 	if err != nil {
 		t.Errorf("Error: GetWithPaginationDB Invalid: %s", err)
 	}
 
 	if total > 0 {
 		t.Error("Too many records are found (Invalid)")
+	}
+
+	t.Log(records)
+
+	//tests search with keys
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, SearchTitle, keywordSingle, tagEmpty, "")
+	if err != nil {
+		t.Errorf("Error: GetWithPaginationDB Invalid: %s", err)
+	}
+
+	if total != 1 {
+		t.Error("Too many or few records are found")
+	}
+
+	if records[0].ID != newRecord1.ID {
+		t.Error("Error: wrong record returned")
+	}
+
+	t.Log(records)
+
+	records, total, err = GetWithPaginationDB(1, 1, 10, 0, SearchContent, keywordDouble, tagEmpty, "")
+	if err != nil {
+		t.Errorf("Error: GetWithPaginationDB Invalid: %s", err)
+	}
+
+	if total != 2 {
+		t.Error("Too many or few records are found")
 	}
 
 	t.Log(records)

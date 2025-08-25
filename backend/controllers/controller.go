@@ -55,6 +55,8 @@ func GetRecords(logger *zap.Logger) gin.HandlerFunc {
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 		sort := c.DefaultQuery("sort", "created_at desc")
+		searchType := c.DefaultQuery("search_type", "")
+		keywords := c.QueryArray("keyword")
 		tags := c.QueryArray("tag")
 
 		if page < 1 {
@@ -66,7 +68,7 @@ func GetRecords(logger *zap.Logger) gin.HandlerFunc {
 		}
 		offset := (page - 1) * limit
 
-		records, total, err := database.GetWithPaginationDB(userID.(int), page, limit, offset, tags, sort)
+		records, total, err := database.GetWithPaginationDB(userID.(int), page, limit, offset, database.SearchType(searchType), keywords, tags, sort)
 		if err != nil {
 			logger.Sugar().Errorf("Getting records failed", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Getting records failed"})
